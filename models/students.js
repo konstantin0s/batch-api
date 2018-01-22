@@ -7,6 +7,7 @@ const studentSchema = new Schema({
  classroomId: { type: Schema.Types.ObjectId, ref: 'classrooms' },
  fullName: { type: String, required: true },
  photo: { type: String },
+ 
  evaluationDay: { type: [] },
  evaluationDate: { type: Date, default: Date.now },
  color: { type: String, default: 'orange' },
