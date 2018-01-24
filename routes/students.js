@@ -1,128 +1,96 @@
-// routes/classrooms.js
 const router = require('express').Router()
 const passport = require('../config/auth')
-const { Classroom, User } = require('../models')
+const { Student } = require('../models')
+const utils = require('../lib/utils')
 
 const authenticate = passport.authorize('jwt', { session: false })
 
-const loadClassroom = (req, res, next) => {
-  const id = req.params.id
-
-  Classroom.findById(id)
-    .then((classroom) => {
-      req.classroom = classroom
-      next()
-    })
-    .catch((error) => next(error))
-}
-
-const getStudents = (req, res, next) => {
-  Promise.all([req.classroom.studentOneId].map(studentId => User.findById(studentId)))
-    .then((users) => {
-      // Combine player data and user's name
-      req.students = users
-        .filter(u => !!u)
-        .map(u => ({
-          userId: u._id,
-          name: u.name
-        }))
-      next()
-    })
-    .catch((error) => next(error))
-}
-
 module.exports = io => {
   router
-    .get('/classrooms/:id/students', loadClassroom, getStudents, (req, res, next) => {
-      if (!req.classroom || !req.students) { return next() }
-      res.json(req.students)
+    .get('/students', (req, res, next) => {
+      Student.find()
+        // Newest batches first
+        .sort({ createdAt: -1 })
+        // Send the data in JSON format
+        .then((student) => res.json(student))
+        // Throw a 500 error if something goes wrong
+        .catch((error) => next(error))
     })
+    .get('/students/:id', (req, res, next) => {
+      const id = req.params.id
 
-    .post('/classrooms/:id/students', authenticate, loadClassroom, (req, res, next) => {
-      if (!req.classroom) { return next() }
-
-      const userId = req.account._id
-      const { studentOneId } = req.classroom
-
-      const isStudentOne = studentOneId && studentOneId.toString() === userId.toString()
-
-
-      if (isStudentOne) {
-        const error = Error.new('You already joined this classroom!')
-        error.status = 401
-        return next(error)
-      }
-
-      if (!!studentOneId) {
-        const error = Error.new('Sorry classroom is full!')
-        error.status = 401
-        return next(error)
-      }
-
-      // Add the user to the players
-      if (!studentOneId) req.classroom.studentOneId = userId
-
-
-      req.classroom.save()
-        .then((classroom) => {
-          req.classroom = classroom
-          next()
+      Student.findById(id)
+        .then((student) => {
+          if (!student) { return next() }
+          res.json(student)
         })
         .catch((error) => next(error))
-    },
-    // Fetch new player data
-    getStudents,
-    // Respond with new player data in JSON and over socket
-    (req, res, next) => {
-      io.emit('action', {
-        type: 'CLASSROOM_STUDENTS_UPDATED',
-        payload: {
-          classroom: req.classroom,
-          players: req.students
-        }
-      })
-      res.json(req.students)
     })
-
-    .delete('/classrooms/:id/students', authenticate, (req, res, next) => {
-      if (!req.classroom) { return next() }
-
-      const userId = req.account._id
-      const { studentOneId } = req.classroom
-
-      const isStudentOne = studentOneId.toString() === userId.toString()
+    .post('/students', authenticate, (req, res, next) => {
+      const newStudent = req.body
 
 
-      if (!isStudentOne) {
-        const error = Error.new('You are not a student in this classroom!')
-        error.status = 401
-        return next(error)
-      }
-
-      // Add the user to the players
-      if (isStudentOne) req.classroom.studentOneId = null
-      
-
-      req.classroom.save()
-        .then((classroom) => {
-          req.classroom = classroom
-          next()
+      Student.create(newStudent)
+        .then((student) => {
+          io.emit('action', {
+            type: 'STUDENT_CREATED',
+            payload: student
+          })
+          res.json(student)
         })
         .catch((error) => next(error))
+    })
+    .put('/students/:id', authenticate, (req, res, next) => {
+      const id = req.params.id
+      const updatedStudent = req.body
 
-    },
-    // Fetch new player data
-    getStudents,
-    // Respond with new player data in JSON and over socket
-    (req, res, next) => {
-      io.emit('action', {
-        type: 'CLASSROOM_STUDENTS_UPDATED',
-        payload: {
-          classroom: req.classroom,
-          players: req.students
-        }
-      })
-      res.json(req.students)
+      Student.findByIdAndUpdate(id, { $set: updatedStudent }, { new: true })
+        .then((student) => {
+          io.emit('action', {
+            type: 'STUDENT_UPDATED',
+            payload: student
+          })
+          res.json(student)
+        })
+        .catch((error) => next(error))
+    })
+    .patch('/students/:id', authenticate, (req, res, next) => {
+      const id = req.params.id
+      const patchForStudent = req.body
+
+      Student.findById(id)
+        .then((student) => {
+          if (!student) { return next() }
+
+          const updatedStudent = { ...student, ...patchForStudent }
+
+          Student.findByIdAndUpdate(id, { $set: updatedStudent }, { new: true })
+            .then((student) => {
+              io.emit('action', {
+                type: 'STUDENT_UPDATED',
+                payload: student
+              })
+              res.json(student)
+            })
+            .catch((error) => next(error))
+        })
+        .catch((error) => next(error))
+    })
+    .delete('/students/:id', authenticate, (req, res, next) => {
+      const id = req.params.id
+      Student.findByIdAndRemove(id)
+        .then(() => {
+          io.emit('action', {
+            type: 'STUDENT_REMOVED',
+            payload: id
+          })
+          res.status = 200
+          res.json({
+            message: 'Removed',
+            _id: id
+          })
+        })
+        .catch((error) => next(error))
     })
 
   return router
