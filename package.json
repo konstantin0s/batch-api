@@ -6,14 +6,15 @@
   "license": "MIT",
   "scripts": {
     "start": "node .",
+    "seed": "node db/seed.js",
     "dev": "nodemon --inspect ."
   },
   "dependencies": {
     "body-parser": "^1.18.2",
     "cors": "^2.8.4",
     "express": "^4.16.2",
-    "jsonwebtoken": "^8.1.0",
-    "mongoose": "^4.12.4",
+    "jsonwebtoken": "^8.1.1",
+    "mongoose": "^5.0.1",
     "passport": "^0.4.0",
     "passport-jwt": "^3.0.1",
     "passport-local": "^1.0.0",
@@ -22,6 +23,7 @@
     "socketio-jwt-auth": "^0.0.6"
   },
   "devDependencies": {
-    "nodemon": "^1.12.1"
+    "nodemon": "^1.12.1",
+    "superagent": "^3.8.2"
   }
 }

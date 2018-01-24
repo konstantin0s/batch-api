@@ -30,12 +30,8 @@ module.exports = io => {
     .post('/classrooms', authenticate, (req, res, next) => {
       const newClassroom = {
         userId: req.account._id,
-        playerOneId: req.account._id,
-        board: [
-          null, null, null,
-          null, null, null,
-          null, null, null
-        ]
+        studentOneId: req.account._id,
+
       }
 
       Classroom.create(newClassroom)
@@ -71,37 +67,37 @@ module.exports = io => {
         .then((classroom) => {
           if (!classroom) { return next() }
 
-          if (usersIntent.claim || usersIntent.claim === 0) {
-            const playerOneId = classroom.playerOneId.toString()
-            const playerTwoId = classroom.playerTwoId.toString()
-
-            // your turn?
-            const turn = classroom.board.filter((s) => !!s).length % 2
-            const hasTurn = (turn === 0 && playerOneId === userId) ||
-              (turn === 1 && playerTwoId === userId)
-            if (!hasTurn) {
-              const err = new Error('It is not your turn... :/')
-              err.status = 422
-              return next(err)
-            }
-
-            // square available?
-            const squareAvailable = usersIntent.claim >= 0 &&
-              usersIntent.claim < 9 &&
-              !classroom.board[usersIntent.claim]
-            if (!squareAvailable) {
-              const err = new Error('That square is already taken lol')
-              err.status = 422
-              return next(err)
-            }
-
-            // are you a winner after this?
-            const playerSymbol = turn === 0 ? 'o' : 'x'
-            classroom.board[usersIntent.claim] = playerSymbol
-
-            // is it a draw after this?
-            //etc.
-          }
+          // if (usersIntent.claim || usersIntent.claim === 0) {
+          //   const studentId = classroom.studentId.toString()
+          //
+          //
+          //   // your turn?
+          //   // const turn = classroom.board.filter((s) => !!s).length % 2
+          //   // const hasTurn = (turn === 0 && studentId === userId)
+          //
+          //   // if (!hasTurn) {
+          //   //   const err = new Error('It is not your turn... :/')
+          //   //   err.status = 422
+          //   //   return next(err)
+          //   // }
+          //
+          //   // square available?
+          //   // const squareAvailable = usersIntent.claim >= 0 &&
+          //   //   usersIntent.claim < 9 &&
+          //   //   !classroom.board[usersIntent.claim]
+          //   // if (!squareAvailable) {
+          //   //   const err = new Error('That square is already taken lol')
+          //   //   err.status = 422
+          //   //   return next(err)
+          //   // }
+          //
+          //   // // are you a winner after this?
+          //   // const playerSymbol = turn === 0 ? 'o' : 'x'
+          //   // classroom.board[usersIntent.claim] = playerSymbol
+          //
+          //   // is it a draw after this?
+          //   //etc.
+          // }
 
           Classroom.findByIdAndUpdate(id, { $set: classroom }, { new: true })
             .then((classroom) => {
@@ -115,6 +111,7 @@ module.exports = io => {
         })
         .catch((error) => next(error))
     })
+
     .delete('/classrooms/:id', authenticate, (req, res, next) => {
       const id = req.params.id
       Classroom.findByIdAndRemove(id)
