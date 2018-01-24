@@ -12,7 +12,7 @@ module.exports = io => {
         // Newest batches first
         .sort({ createdAt: -1 })
         // Send the data in JSON format
-        .then((student) => res.json(student))
+        .then((students) => res.json(students))
         // Throw a 500 error if something goes wrong
         .catch((error) => next(error))
     })

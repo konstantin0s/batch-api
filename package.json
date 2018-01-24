@@ -1,5 +1,5 @@
 {
-  "name": "memory-classroom-api",
+  "name": "classroom-api",
   "version": "1.0.0",
   "description": "API for memory classrooms",
   "main": "index.js",

@@ -3,7 +3,7 @@ const cors = require('cors')
 const bodyParser = require('body-parser')
 const passport = require('./config/auth')
 // const { classrooms, users, sessions, students, evaluations } = require('./routes')
-const { classrooms, users, sessions } = require('./routes')
+const { classrooms, users, sessions, students, evaluations } = require('./routes')
 const http = require('http')
 const socketAuth = require('./config/socket-auth')
 const socketIO = require('socket.io')
@@ -29,7 +29,8 @@ app
   .use(passport.initialize())
   .use(classrooms(io))
 
-  // .use(students(io))
+  .use(students(io))
+  .use(evaluations(io))
   .use(users)
   .use(sessions)
 

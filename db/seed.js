@@ -85,6 +85,8 @@
 const request = require('superagent')
 const user = require('./fixtures/user.json')
 const classrooms = require('./fixtures/classrooms.json')
+const students = require('./fixtures/students.json')
+const evaluations = require('./fixtures/evaluations.json')
 
 
 
@@ -106,6 +108,41 @@ const createClassrooms = (token) => {
       })
   })
 }
+
+const createStudents = (token) => {
+  return students.map((student) => {
+    return request
+      .post(createUrl('/students'))
+      .set('Authorization', `Bearer ${token}`)
+      .send(student)
+      .then((res) => {
+        console.log('Student seeded...', res.body.title)
+      })
+      .catch((err) => {
+        console.error('Error seeding student!', err)
+      })
+  })
+}
+
+
+const createEvaluations = (token) => {
+  return evaluations.map((evaluation) => {
+    return request
+      .post(createUrl('/evaluations'))
+      .set('Authorization', `Bearer ${token}`)
+      .send(evaluation)
+      .then((res) => {
+        console.log('Evaluations seeded', res.body.title)
+      })
+      .catch((err) => {
+        console.error('Error seeding evaluation!', err)
+      })
+  })
+}
+
+
+
+
 
 const authenticate = (email, password) => {
   request

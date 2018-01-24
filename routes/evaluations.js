@@ -54,7 +54,7 @@ module.exports = io => {
         })
         .catch((error) => next(error))
     })
-    .patch('/evaluation/:id', authenticate, (req, res, next) => {
+    .patch('/evaluations/:id', authenticate, (req, res, next) => {
       const id = req.params.id
       const patchForEvaluation = req.body
 
